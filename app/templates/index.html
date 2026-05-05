@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager API Tester</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #22c55e;
+            --error: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        h2 {
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            color: #818cf8;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .response-area {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #000;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.875rem;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            color: #22c55e;
+        }
+
+        .task-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background-color: #312e81;
+            color: #c7d2fe;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .status-todo {
+            background: #475569;
+        }
+
+        .status-in_progress {
+            background: #d97706;
+        }
+
+        .status-done {
+            background: #16a34a;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>Task & Notes Manager</h1>
+                <button onclick="logout()"
+                    style="width: auto; padding: 0.5rem 1rem; background-color: #ef4444;">Logout</button>
+            </div>
+            <p style="color: var(--text-muted)">Manage your tasks efficiently</p>
+        </header>
+
+        <div class="grid">
+            <div class="side">
+                <div class="card">
+                    <h2>Quick Actions</h2>
+                    <button onclick="fetchTasks()">Refresh Tasks</button>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label>Search</label>
+                        <input type="text" id="search-input" placeholder="Search tasks..." oninput="fetchTasks()">
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 1.5rem;">
+                    <h2>Manage Tags</h2>
+                    <div class="form-group">
+                        <input type="text" id="tag-name" placeholder="New tag name...">
+                    </div>
+                    <button onclick="createTag()">Create Tag</button>
+                    <div id="tags-list-side" style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        <!-- Tags will appear here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="main">
+                <div class="card">
+                    <h2>Create New Task</h2>
+                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" id="task-title" placeholder="What needs to be done?">
+                        </div>
+                        <div class="form-group">
+                            <label>Due Date</label>
+                            <input type="date" id="task-due-date">
+                        </div>
+                    </div>
+                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Priority</label>
+                            <select id="task-priority">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="task-status">
+                                <option value="todo">Todo</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="done">Done</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="task-desc" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Attach Tags</label>
+                        <div id="tag-selection"
+                            style="display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; min-height: 40px;">
+                        </div>
+                    </div>
+                    <button onclick="createTask()">Create Task</button>
+                </div>
+
+                <div class="card" style="margin-top: 2rem;">
+                    <h2>Tasks</h2>
+                    <div id="tasks-list">
+                        <p style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading tasks...</p>
+                    </div>
+                    <div id="pagination" style="display: flex; justify-content: center; gap: 1rem; margin-top: 1rem;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 2rem;">
+            <h2>API Response</h2>
+            <div id="api-response" class="response-area">Ready...</div>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token') || '';
+        let currentPage = 1;
+        let availableTags = [];
+
+        if (!token) {
+            window.location.href = '/login';
+        } else {
+            initializeApp();
+        }
+
+        async function initializeApp() {
+            await fetchTags();
+            await fetchTasks();
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+
+        async function fetchTags() {
+            const res = await fetch('/tags', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            availableTags = await res.json();
+            renderTagManagement();
+            renderTagSelection();
+        }
+
+        function renderTagManagement() {
+            const container = document.getElementById('tags-list-side');
+            container.innerHTML = availableTags.map(tag => `<span class="tag">${tag.name}</span>`).join('');
+        }
+
+        function renderTagSelection() {
+            const container = document.getElementById('tag-selection');
+            container.innerHTML = availableTags.map(tag => `
+                <label style="display: flex; align-items: center; gap: 0.25rem; background: var(--card-bg); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 0.8rem; cursor: pointer;">
+                    <input type="checkbox" name="tag-ids" value="${tag.id}" style="width: auto;"> ${tag.name}
+                </label>
+            `).join('');
+        }
+
+        async function createTag() {
+            const name = document.getElementById('tag-name').value;
+            if (!name) return;
+
+            const res = await fetch('/tags', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name })
+            });
+
+            if (res.ok) {
+                document.getElementById('tag-name').value = '';
+                await fetchTags();
+            } else {
+                const data = await res.json();
+                document.getElementById('api-response').innerText = JSON.stringify(data, null, 2);
+            }
+        }
+
+
+        async function fetchTasks(page = 1) {
+            if (!token) return;
+            currentPage = page;
+            const search = document.getElementById('search-input').value;
+            const res = await fetch(`/tasks?page=${page}&limit=5&search=${search}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await res.json();
+
+            const list = document.getElementById('tasks-list');
+            list.innerHTML = '';
+
+            if (result.data && result.data.length > 0) {
+                result.data.forEach(task => {
+                    const div = document.createElement('div');
+                    div.className = 'task-item';
+                    div.innerHTML = `
+                        <div>
+                            <strong>${task.title}</strong>
+                            <div style="font-size: 0.8rem; color: var(--text-muted)">${task.description || ''}</div>
+                            <div>${task.tags.map(t => `<span class="tag">${t.name}</span>`).join('')}</div>
+                        </div>
+                        <div style="text-align: right">
+                            <span class="status-badge status-${task.status}">${task.status.replace('_', ' ')}</span>
+                            <div style="font-size: 0.7rem; margin-top: 0.25rem">P: ${task.priority}</div>
+                            <button onclick="deleteTask(${task.id})" style="width: auto; padding: 2px 8px; background: #ef4444; font-size: 0.7rem; margin-top: 0.5rem">Delete</button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            } else {
+                list.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 1rem;">No tasks found</p>';
+            }
+
+            renderPagination(result.total_pages, result.page);
+        }
+
+        function renderPagination(total, current) {
+            const nav = document.getElementById('pagination');
+            nav.innerHTML = '';
+            for (let i = 1; i <= total; i++) {
+                const btn = document.createElement('button');
+                btn.innerText = i;
+                btn.style.width = '40px';
+                if (i === current) btn.style.backgroundColor = '#4b5563';
+                btn.onclick = () => fetchTasks(i);
+                nav.appendChild(btn);
+            }
+        }
+
+        async function createTask() {
+            const title = document.getElementById('task-title').value;
+            const description = document.getElementById('task-desc').value;
+            const status = document.getElementById('task-status').value;
+            const priority = document.getElementById('task-priority').value;
+            const due_date = document.getElementById('task-due-date').value;
+
+            // Collect tag IDs
+            const tagCheckboxes = document.querySelectorAll('input[name="tag-ids"]:checked');
+            const tag_ids = Array.from(tagCheckboxes).map(cb => parseInt(cb.value));
+
+            const res = await fetch('/tasks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title, description, status, priority,
+                    due_date: due_date || null,
+                    tag_ids
+                })
+            });
+            const data = await res.json();
+            document.getElementById('api-response').innerText = JSON.stringify(data, null, 2);
+
+            if (res.ok) {
+                // Clear form
+                document.getElementById('task-title').value = '';
+                document.getElementById('task-desc').value = '';
+                tagCheckboxes.forEach(cb => cb.checked = false);
+                fetchTasks();
+            }
+        }
+
+        async function deleteTask(id) {
+            if (!confirm('Are you sure?')) return;
+            await fetch(`/tasks/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            fetchTasks(currentPage);
+        }
+    </script>
+</body>
+
+</html>
