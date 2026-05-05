@@ -1,0 +1,10 @@
+Flask
+Flask-SQLAlchemy
+Flask-JWT-Extended
+passlib[bcrypt]
+bcrypt==4.0.1
+marshmallow
+Flask-Marshmallow
+marshmallow-sqlalchemy
+python-dotenv
+flask-cors
